@@ -7,8 +7,8 @@ typedef struct Pix
   unsigned char R;
   unsigned char G;
   unsigned char B;
-  /*unsigned char L;
-  int BW;*/
+  //unsigned char L;
+  //int BW;
 }Pix;
 #pragma pack(pop)
 
@@ -31,7 +31,7 @@ typedef struct BitMap
     long YPixelsPreMeter;
     long ColorsUsed;
     long ColorsImportant;
-    struct Pix *pixels;
+    struct Pix *pixels
 }BitMap;
 #pragma pack(pop)
 
@@ -92,7 +92,6 @@ void sepia(unsigned char *r,unsigned char *g, unsigned char *b){
 
 }
 
-
 void borderDetector(Pix *pixel, BitMap *pBmp){
 
     int rOut = 0;
@@ -104,7 +103,7 @@ void borderDetector(Pix *pixel, BitMap *pBmp){
 
     int luminosity = 0;
     int luminosity2 = 0;
-
+/*
     for(i = 1; i < pBmp->Height; ++i){
         for(j = i; j < pBmp->Width; ++j){
             luminosity = (int)(0.2126 * *pBmp.pixels[i-1, j-1]->R + 0.7152 * *pBmp.pixels[i-1, j-1]->G + 0.0722 * *pBmp.pixels[i-1, j-1]->B);
@@ -121,62 +120,75 @@ void borderDetector(Pix *pixel, BitMap *pBmp){
             }
         }
     }
-
+*/
 }
+
+
 
 int main(int argc, char **argv){
 
-    unsigned long int i=0;//to count pixels read
-    unsigned long int S=0;//number of pixels to read
-    unsigned long int j = 0;
-    struct BitMap source_info;//to store bitmap info header
-    struct Pix source_pix;// to store pixels
+    unsigned long int i=0;
+    unsigned long int S=0;
 
-    FILE *fp;//file pointer for source file
-    FILE *Dfp;//file pointer for destination file
+    int filterChoice = 0;
 
-    if(!(fp=fopen("duck.bmp","rb"))){//open in binary read mode
-        printf(" can not open file");//print and exit if file open error
+    struct BitMap source_info;
+    struct Pix source_pix;
+
+    FILE *fp;
+    FILE *Dfp;
+
+    printf("Choose filter: \n1: Threshold\n2: Grayscale\n3: Sepia\n4: BorderDetector\n");
+    scanf("%d", &filterChoice);
+
+
+    if(!(fp=fopen("duck.bmp","rb"))){
+        printf(" can not open file");
         exit(-1);
     }
 
 
-    Dfp=fopen("border.bmp","wb");//open in binary write mode
-    //read the headers to source file
-    //fread(&source_info, (sizeof(long)*3 + sizeof(short)),1,fp);
-    fread(&source_info, sizeof(source_info),1,fp);
+    Dfp=fopen("out.bmp","wb");
 
-    //calculate the number of pix to read
+    fread(&source_info, sizeof(BitMap),1,fp);
+
     S=source_info.Width*source_info.Height;
-    //source_info.pixels
-    //Pix* pixels =  (struct Pix *) malloc(sizeof(struct Pix)*S);
-    Pix* pixels =  (struct Pix *) malloc(sizeof(struct Pix));
+    Pix* pixels =  (struct Pix *) malloc(sizeof(struct Pix)*S);
 
-    //read pixels
+
     for(i=1;i<=S;i++){
-        //read pixel from source file
         fread(&source_pix,sizeof(struct Pix),1,fp);
-        //source_info.
         pixels[i-1] = source_pix;
     }
 
-    // write header to dest file
-    //fwrite(&source_info,  (sizeof(long)*3 + sizeof(short)),1,Dfp);
-    fwrite(&source_info, sizeof(source_info),1,Dfp);
-    // write pixels to dest file
-    borderDetector(&pixels, &source_info);
+    fwrite(&source_info, sizeof(BitMap),1,Dfp);
 
 
-    for(i=1;i<=S;i++){
-        //threshold(&pixels[i-1].R, &pixels[i-1].G, &pixels[i-1].B);
-        //borderDetector(&pixels[][]);
-        fwrite(&pixels[i-1],sizeof(struct Pix),1,Dfp);
-    }
+    if (filterChoice == 1){
+        for(i=1;i<=S;i++){
+                threshold(&pixels[i-1].R, &pixels[i-1].G, &pixels[i-1].B);
+                fwrite(&pixels[i-1],sizeof(struct Pix),1,Dfp);
+            }
+    }else if(filterChoice == 2){
+            for(i=1;i<=S;i++){
+                grayscale(&pixels[i-1].R, &pixels[i-1].G, &pixels[i-1].B);
+                fwrite(&pixels[i-1],sizeof(struct Pix),1,Dfp);
+            }
+        }else if(filterChoice == 3){
+                for(i=1;i<=S;i++){
+                    sepia(&pixels[i-1].R, &pixels[i-1].G, &pixels[i-1].B);
+                    fwrite(&pixels[i-1],sizeof(struct Pix),1,Dfp);
+                }
+            }else{
+                for(i=1;i<=S;i++){
+                    fwrite(&pixels[i-1],sizeof(struct Pix),1,Dfp);
+                }
+            }
 
-    //close all fields
+
+
     fclose(fp);
     fclose(Dfp);
-
     return 0;
 }
 
